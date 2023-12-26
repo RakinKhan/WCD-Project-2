@@ -50,3 +50,54 @@ resource "aws_subnet" "private_subnet" {
     Name = "Private Subnet"
   }
 }
+
+# 1v) Public Route Table 
+resource "aws_route_table" "public_route_table" {
+  vpc_id = aws_vpc.project_2_vpc.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.public_IGW.id
+  }
+
+  tags = {
+    Name = "Public Route Table"
+  }
+}
+
+# 1v-i) Private Subnet Security Group
+resource "aws_security_group" "private_security_group" {
+    ingress {
+        from_port = 0
+        to_port = 0
+        protocol = "-1"
+        security_groups = [aws_security_group.public_security_group]
+  }
+}
+# 1v-ii Public Subnet Security Group
+resource "aws_security_group" "public_security_group" {
+  ingress {
+    from_port = 22
+    to_port = 22
+    protocol = 22
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+    ingress {
+    from_port = 80      
+    to_port = 80
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+    ingress {
+    from_port = 443
+    to_port = 443
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
