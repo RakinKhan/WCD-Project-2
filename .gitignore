@@ -1,3 +1,6 @@
 **/.terraform/*
 /.terraform.lock.hcl
 /access-credentials.tf
+
+*.tfstate
+*.tfstate.*
