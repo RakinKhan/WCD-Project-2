@@ -117,20 +117,24 @@ resource "aws_security_group" "public_security_group" {
   }
 }
 
+# Security Key-Pair
 resource "aws_key_pair" "WCD_project_2_key" {
   key_name   = "WCD_project_2_key"
   public_key = file("C:\\Users\\Rakin\\.ssh\\id_rsa.pub")
 }
+
 # 2i) EC2 Instance For Database Server
 resource "aws_instance" "database_server" {
   ami                         = "ami-0c7217cdde317cfec"
   instance_type               = "t2.micro"
   subnet_id                   = aws_subnet.private_subnet.id
   vpc_security_group_ids      = [aws_security_group.private_security_group.id]
+  key_name                    = aws_key_pair.WCD_project_2_key.key_name
   associate_public_ip_address = false
-  user_data                   = <<EOF
+  user_data                   = <<-EOF
     #!/bin/bash
-    sudo apt update && sudo apt install mysql-server -y
+    sudo apt update -y
+    sudo apt install mysql-server -y
     sudo ststem start mysql
     sudo systemctl status mysql
     sudo ufw allow 3306/tcp
@@ -149,8 +153,9 @@ resource "aws_instance" "public_api_server" {
   key_name                    = aws_key_pair.WCD_project_2_key.key_name
   associate_public_ip_address = true
   user_data                   = <<-EOF
-    #!/bin/bash
-    sudo apt update -y && sudo install python3 -y
+    #! /bin/bash
+    sudo apt update -y 
+    sudo apt install python3 -y
     sudo apt install python3-pip -y
     pip3 install fastapi
     pip3 install uvicorn
