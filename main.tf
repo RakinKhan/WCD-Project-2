@@ -135,7 +135,7 @@ resource "aws_instance" "database_server" {
     #!/bin/bash
     sudo apt update -y
     sudo apt install mysql-server -y
-    sudo ststem start mysql
+    sudo systemctl start mysql
     sudo systemctl status mysql
     sudo ufw allow 3306/tcp
   EOF
@@ -161,8 +161,6 @@ resource "aws_instance" "public_api_server" {
     sudo apt install python3-pip -y
     pip3 install fastapi
     pip3 install uvicorn
-
-    mv id_rsa.pub
     EOF
   tags = {
     Name = "Fastapi Server"
