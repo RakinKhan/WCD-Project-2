@@ -52,7 +52,7 @@ resource "aws_subnet" "private_subnet" {
 }
 
 # 1v) Public Subnet RT Association
-resource "aws_route_table_association" "private_rt" {
+resource "aws_route_table_association" "public_rt_association_igw" {
   subnet_id      = aws_subnet.public_subnet.id
   route_table_id = aws_route_table.public_route_table.id
 }
@@ -86,6 +86,9 @@ resource "aws_security_group" "private_security_group" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+    tags = {
+    Name = "Private Subnet Security Group"
+  }
 }
 # 1v-ii Public Subnet Security Group
 resource "aws_security_group" "public_security_group" {
@@ -108,12 +111,16 @@ resource "aws_security_group" "public_security_group" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+      tags = {
+    Name = "Public Subnet Security Group"
+  }
 }
 
 # Security Key-Pair
 resource "aws_key_pair" "WCD_project_2_key" {
   key_name   = "WCD_project_2_key"
-  public_key = file("C:\\Users\\Rakin\\.ssh\\id_rsa.pub")
+  public_key = file("~/.ssh/id_rsa.pub")
 }
 
 # 2i) EC2 Instance For Database Server
@@ -132,9 +139,11 @@ resource "aws_instance" "database_server" {
     sudo systemctl status mysql
     sudo ufw allow 3306/tcp
   EOF
+
   tags = {
     Name = "Mysql Server"
   }
+  depends_on = [ aws_route_table_association.private_subnet_rt_association_nat ]
 }
 
 # 2ii) EC2 instance for Fastapi Server
@@ -152,8 +161,11 @@ resource "aws_instance" "public_api_server" {
     sudo apt install python3-pip -y
     pip3 install fastapi
     pip3 install uvicorn
+
+    mv id_rsa.pub
     EOF
   tags = {
     Name = "Fastapi Server"
   }
 }
+

@@ -4,3 +4,5 @@
 <br/>
 **Group Members:** Lara, Farius, Juan, Rakin
 
+## Architecture
+![Architecture](architecture.png)
