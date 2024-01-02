@@ -75,9 +75,10 @@ resource "aws_security_group" "private_security_group" {
   vpc_id = aws_vpc.project_2_vpc.id
 
   ingress {
-    from_port       = 0
-    to_port         = 0
-    protocol        = "-1"
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
+    # Allows traffic from Public Subnet to Private Subnet
     security_groups = [aws_security_group.public_security_group.id]
   }
   egress {
@@ -86,7 +87,7 @@ resource "aws_security_group" "private_security_group" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-    tags = {
+  tags = {
     Name = "Private Subnet Security Group"
   }
 }
@@ -112,14 +113,16 @@ resource "aws_security_group" "public_security_group" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-      tags = {
+  tags = {
     Name = "Public Subnet Security Group"
   }
 }
 
 # Security Key-Pair
 resource "aws_key_pair" "WCD_project_2_key" {
-  key_name   = "WCD_project_2_key"
+  # If you have a public .pem key already, change key name below to match the .pem key.
+  key_name = "WCD_project_2_key"
+  # Make sure that the path to the public key matches its exact location. 
   public_key = file("~/.ssh/id_rsa.pub")
 }
 
@@ -131,9 +134,11 @@ resource "aws_instance" "database_server" {
   vpc_security_group_ids      = [aws_security_group.private_security_group.id]
   key_name                    = aws_key_pair.WCD_project_2_key.key_name
   associate_public_ip_address = false
+  # Updates and Upgrades APT packages, installs and starts MySQL server. Opens port 3306 for database connection.
   user_data                   = <<-EOF
     #!/bin/bash
     sudo apt update -y
+    sudo apt upgrade -y
     sudo apt install mysql-server -y
     sudo systemctl start mysql
     sudo systemctl status mysql
@@ -141,9 +146,11 @@ resource "aws_instance" "database_server" {
   EOF
 
   tags = {
-    Name = "Mysql Server"
+    Name = "MySQL Server"
   }
-  depends_on = [ aws_route_table_association.private_subnet_rt_association_nat ]
+  # Database Server in Private Subnet will be created only after the creation and association of the NAT Gateway.
+  # This is because the Instance will fail to install the packages without establishing internet connection first. 
+  depends_on = [aws_route_table_association.private_subnet_rt_association_nat]
 }
 
 # 2ii) EC2 instance for Fastapi Server
@@ -154,9 +161,11 @@ resource "aws_instance" "public_api_server" {
   vpc_security_group_ids      = [aws_security_group.public_security_group.id]
   key_name                    = aws_key_pair.WCD_project_2_key.key_name
   associate_public_ip_address = true
+  # Updates and Upgrades APT packages, installs Python, Pip, Fastapi, and Uvicorn packages.
   user_data                   = <<-EOF
     #! /bin/bash
-    sudo apt update -y 
+    sudo apt update -y
+    sudo apt upgrade -y 
     sudo apt install python3 -y
     sudo apt install python3-pip -y
     pip3 install fastapi
